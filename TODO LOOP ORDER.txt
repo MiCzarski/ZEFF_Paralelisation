@@ -1,0 +1,22 @@
+It's not guaranteed that parallelizing a code will always result in faster execution. 
+The effectiveness of parallelization depends on various factors, including the nature of the computation, the size of the problem, and the underlying hardware.
+
+In your specific case, the parallelized version of the subroutine (XYCALCZEFF_PARALLEL) introduces parallelism through OpenMP directives. 
+However, the overhead of managing parallel threads, especially for relatively small computational workloads, might outweigh the benefits of parallelization. 
+Additionally, the loop structure and the nature of the computations within the loop may not be highly parallelizable.
+
+The performance gain from parallelization is often more noticeable when dealing with larger data sets or more computationally intensive tasks. 
+For smaller problems, the overhead of parallelization can sometimes lead to a slowdown.
+
+If you're finding that the linear version (XYCALCZEFF_LINEAR) is faster than the parallel version,
+ it might be worth considering other optimizations or profiling tools to understand where the bottlenecks are and if there are other ways to improve performance.
+
+You can use profiling tools to analyze the performance of your code and identify hotspots or areas that could benefit from optimization. 
+Additionally, experimenting with different compiler optimization flags or restructuring your code may lead to performance improvements.
+
+Remember that the performance of parallelized code can also depend on the specific characteristics of the hardware you are running the code on.
+
+
+
+
+
