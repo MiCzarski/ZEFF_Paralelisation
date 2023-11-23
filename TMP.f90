@@ -1,6 +1,4 @@
-INCLUDE "mod.f90"
-
-SUBROUTINE XYCALCZEFF_LINEAR
+SUBROUTINE XYCALCZEFF_PARALLEL
     USE PLASMA, ONLY: NE, NI, NITOT, ZEFF
     USE IMPUR_MOD, ONLY: NZ
     USE IMPDAT,    ONLY: LSTTIM, NOIM
@@ -8,74 +6,73 @@ SUBROUTINE XYCALCZEFF_LINEAR
     USE WARIANT, ONLY: INZ
     IMPLICIT NONE
     INTEGER :: I, J, IMI, L
-    REAL :: RL1, SUM0, SUM1, SUM2
-    
-    DO I=1,IMX+1 ! 10
-        DO J=1,IMY+1 ! 10
-        SUM0=0.
-        SUM1=0.
-        SUM2=0.
-        IF(INZ.EQ.0) THEN
-            DO IMI=1,NOIM
-            DO L=2,LSTTIM(IMI)+1 ! 20
-                RL1=REAL(L-1)
-                SUM0=SUM0+NZ(I,J,L,IMI)
-                SUM1=SUM1+NZ(I,J,L,IMI)*RL1
-                SUM2=SUM2+NZ(I,J,L,IMI)*RL1*RL1
-            ENDDO ! 20
-            ENDDO
-        ENDIF
-        NITOT(I,J)=NI(I,J)+SUM0
-        NE(I,J)=NI(I,J)+SUM1
-        ZEFF(I,J)=(NI(I,J)+SUM2)/NE(I,J)
-        WRITE(*,*) ZEFF(I,J)
-        ENDDO !10
-    ENDDO !10
-END SUBROUTINE XYCALCZEFF_LINEAR
+    REAL :: RL1, SUM0, SUM1, SUM2, RL1sq
 
-! File: main_program.f90
-PROGRAM MainProgram
-    USE TEST_FUNCTIONS   ! Use the module that contains the function
-    USE WARIANT, ONLY: INZ
-    USE IMPDAT, ONLY: NOIM, LSTTIM
-    USE NET, ONLY: IMX, IMY
-    USE PLASMA, ONLY:  NI
+    NITOT= NI
+    NE= NI
+    ZEFF= NI
+    IF(INZ == 0) THEN
+        OVER_IMI: DO IMI=1,NOIM
+            OVER_L: DO L=2, LSTTIM(IMI) + 1
+                RL1= REAL(L-1)
+                RL1SQ= RL1 * RL1
+                NITOT= NITOT + NZ(:,:,L,IMI)
+                NE= NE + NZ(:,:,L,IMI) * RL1
+                ZEFF= ZEFF + NZ(:,:,L,IMI) * RL1SQ
+            ENDDO OVER_L
+        ENDDO OVER_IMI
+    ENDIF
+    ZEFF= ZEFF / NE
+END SUBROUTINE XYCALCZEFF_PARALLEL
+
+
+SUBROUTINE XYCALCZEFF_PARALLEL
+    USE PLASMA, ONLY: NE, NI, NITOT, ZEFF
     USE IMPUR_MOD, ONLY: NZ
-
+    USE IMPDAT,    ONLY: LSTTIM, NOIM
+    USE NET, ONLY: IMX, IMY
+    USE WARIANT, ONLY: INZ
     IMPLICIT NONE
+    INTEGER :: I, J, IMI, L, LK, RR
+    REAL :: RL1, SUM0, SUM1, SUM2, RL1sq
+    INTEGER, DIMENSION(:), ALLOCATABLE :: rr2imi
 
-    INTEGER ::FSTAT, IMI, I, J, L, LNST1
-    REAL ::  UNKNOWN
-    CHARACTER(*),parameter :: PATH = "DATA.DAT"
-    CHARACTER(*),parameter :: FRMT1="(1P,10E18.8)"  
 
-    !REAL :: a
-   
-    NOIM = 1
-    LSTTIM = [6, 0, 0, 0, 0]
-    INZ = 1
+    NITOT= NI
+    NE= NI
+    ZEFF= NI
 
-    IMX = 101
-    IMY = 43
+    IF(INZ == 0) THEN
+        allocate(rr2imi(sum(lsttim)))
 
-    open(99,file=PATH, status='old',IOSTAT=FSTAT)
-    IF(FSTAT.NE.0) STOP 'Error on TEXIDAT file open'
+        lk= 0
+        do imi= 1, noim
+            rr2imi(lk + 1 : lk + lsttim(imi))= imi
+            lk= lk + lsttim(imi)
+        end do
+        imi= 0
 
-    WRITE(*,*) "READING OLD TECXY DATA:"," NI"
-    READ(99,FRMT1) ((NI(I,J),I=1,IMX+1),J=1,IMY+1)
-    
-    READ(99, FRMT1) UNKNOWN
+        !$OMP PARALLEL DO PRIVATE(rr, imi, l, rl1, rl1sq) SHARED(nitot, nz, ne, zeff, rr2imi)
+        do rr = 1, lk
+            imi = rr2imi(rr)
+            
+            if (imi /= rr2imi(rr-1)) then
+                l = 2
+                rl1 = 2.0
+            else
+                l = l + 1
+                rl1 = rl1 + 1.0
+            end if
 
-    DO IMI=1,NOIM
-       LNST1=LSTTIM(IMI)+1
-       WRITE(*,*) "READING OLD TECXY DATA, IMPURITY", IMI,":"," NZ"
-       READ(99,FRMT1) (((NZ(I,J,L,IMI),L=1,LNST1),J=1,IMY+1),I=1,IMX+1)
-    ENDDO
+            rl1sq = rl1 * rl1
+            nitot(:, :) = nitot(:, :) + nz(:, :, l, imi)
+            ne(:, :) = ne(:, :) + nz(:, :, l, imi) * rl1
+            zeff(:, :) = zeff(:, :) + nz(:, :, l, imi) * rl1sq
+        end do
+        !$OMP END PARALLEL DO
 
-    close(99)
 
-    ! CALL SPEED_TEST(NUMBER_OF_TESTS=10)
+    ENDIF
 
-    CALL XYCALCZEFF_LINEAR
-
-END PROGRAM MainProgram
+    ZEFF= zeff / NE
+END SUBROUTINE XYCALCZEFF_PARALLEL
