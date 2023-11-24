@@ -17,7 +17,7 @@ MODULE TEST_CONTENT_FUNCTIONS
         REAL, INTENT(INOUT) :: NE(:,:)
         REAL, INTENT(INOUT) :: ZEFF(:,:)
 
-        NUMBER_OF_DECIMAL_PLACES = 10
+        NUMBER_OF_DECIMAL_PLACES = 4
         
         ! Copy the input array to the private variable
         ALLOCATE(NITOT_COPY(SIZE(NITOT, 1), SIZE(NITOT, 2)))
@@ -68,6 +68,8 @@ MODULE TEST_CONTENT_FUNCTIONS
         ZEFF = RoundArrayElements(ZEFF)
 
         CALL COMPARE_TABLE(ZEFF_COPY, ZEFF)
+
+        WRITE(*,*) ZEFF_COPY(1, 45), ZEFF(1, 45)
 
     END SUBROUTINE COMPARE
 

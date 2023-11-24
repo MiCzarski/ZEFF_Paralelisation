@@ -25,7 +25,7 @@ MODULE TEST_TIME_FUNCTIONS
     SUBROUTINE CALCULATE_SPEED_TEST(LINEAR)
         ! Call the function multiple times and store the results
         DO I = 1, NUM_TESTS
-            IF (LINEAR) THEN
+            IF (LINEAR == 0) THEN
                 RESULTS(I) = ONE_SPEED_TEST_LINEAR() ! Pass different inputs if needed
             ELSE
                 RESULTS(I) = ONE_SPEED_TEST_PARALLEL()

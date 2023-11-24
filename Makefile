@@ -1,5 +1,5 @@
-FC := ifort
-FFLAGS := -O2 -openmp
+FC := gfortran
+FFLAGS := -O2 
 
 # Source files
 SRC := TEST_CONTENT_FUNCTIONS.f90 TEST_TIME_FUNCTIONS.f90 main_program.f90 

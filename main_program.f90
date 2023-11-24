@@ -37,45 +37,43 @@ SUBROUTINE XYCALCZEFF_PARALLEL
     USE PLASMA, ONLY: NE, NI, NITOT, ZEFF
     USE IMPUR_MOD, ONLY: NZ
     USE IMPDAT,    ONLY: LSTTIM, NOIM
-    USE NET, ONLY: IMX, IMY
     USE WARIANT, ONLY: INZ
     IMPLICIT NONE
-    INTEGER :: I, J, IMI, L, LK, RR
-    REAL :: RL1, SUM0, SUM1, SUM2, RL1sq
+    INTEGER :: IMI, L, LK, RR
+    REAL :: RL1, RL1sq
     INTEGER, DIMENSION(:), ALLOCATABLE :: rr2imi
-
-
-    NITOT= NI
-    NE= NI
-    ZEFF= NI
-
+ 
+    nitot= 0.0_8
+    ne= 0.0_8
+    Zeff= 0.0_8
     IF(INZ == 0) THEN
         allocate(rr2imi(sum(lsttim)))
-
+ 
         lk= 0
         do imi= 1, noim
             rr2imi(lk + 1 : lk + lsttim(imi))= imi
             lk= lk + lsttim(imi)
         end do
-        imi= 0
-
-        !PARALLEL DO PRIVATE(rr, l, rl1, rl1sq) FIRSTPRIVATE(imi) SHARED(nitot, nz, ne, zeff, rr2imi)
+        imi= 0;   l= 2;   rl1= 1.0_8
+ 
+        ! PARALLEL DO PRIVATE(rr, rl1sq) FIRSTPRIVATE(imi, l, rl1) SHARED(nz, rr2imi) reduction(+: nitot, ne, zeff)
         do rr= 1, lk
             if(imi /= rr2imi(rr)) then
-            l= 2;   rl1= 2.0_8;   imi= rr2imi(rr)
+               l= 2;   rl1= 1.0_8;   imi= rr2imi(rr)
             else
-            l= l + 1;   rl1= rl1 + 1.0_8
+               l= l + 1;   rl1= rl1 + 1.0_8
             end if
             RL1sq= RL1 * RL1
             NITOT(:,:)= NITOT(:,:) + NZ(:,:,L,IMI)
             ne(:,:)= ne(:,:) + NZ(:,:,L,IMI) * RL1
             zeff(:,:)= zeff(:,:) + NZ(:,:,L,IMI) * RL1sq
         end do
-        !END PARALLEL DO
-
+        ! END PARALLEL DO
+ 
     ENDIF
-
-    ZEFF= zeff / NE
+    NITOT= nitot + NI
+    NE= ne + NI
+    ZEFF= (Zeff + NI) / ne
 END SUBROUTINE XYCALCZEFF_PARALLEL
 
 
@@ -124,7 +122,7 @@ PROGRAM MainProgram
 
     close(99)
 
-    CALL SPEED_TEST(NUMBER_OF_TESTS=1, NUMBER_OF_RUNES_PER_TEST=1, LINEAR=1)
+    CALL SPEED_TEST(NUMBER_OF_TESTS=1, NUMBER_OF_RUNES_PER_TEST=1, LINEAR=0)
     CALL LOAD_FIRST_RESULT(NITOT, NE, ZEFF)
    
     NOIM = 1
