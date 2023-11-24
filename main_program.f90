@@ -59,7 +59,7 @@ SUBROUTINE XYCALCZEFF_PARALLEL
         end do
         imi= 0
 
-        !$OMP PARALLEL DO PRIVATE(rr, l, rl1, rl1sq) FIRSTPRIVATE(imi) SHARED(nitot, nz, ne, zeff, rr2imi)
+        !PARALLEL DO PRIVATE(rr, l, rl1, rl1sq) FIRSTPRIVATE(imi) SHARED(nitot, nz, ne, zeff, rr2imi)
         do rr= 1, lk
             if(imi /= rr2imi(rr)) then
             l= 2;   rl1= 2.0_8;   imi= rr2imi(rr)
@@ -71,7 +71,7 @@ SUBROUTINE XYCALCZEFF_PARALLEL
             ne(:,:)= ne(:,:) + NZ(:,:,L,IMI) * RL1
             zeff(:,:)= zeff(:,:) + NZ(:,:,L,IMI) * RL1sq
         end do
-        !$OMP END PARALLEL DO
+        !END PARALLEL DO
 
     ENDIF
 
@@ -80,12 +80,19 @@ END SUBROUTINE XYCALCZEFF_PARALLEL
 
 
 PROGRAM MainProgram
-    USE TEST_FUNCTIONS   ! Use the module that contains the function
+    USE TEST_TIME_FUNCTIONS   ! Use the module that contains the function
+    USE TEST_CONTENT_FUNCTIONS
     USE WARIANT, ONLY: INZ
     USE IMPDAT, ONLY: NOIM, LSTTIM
     USE NET, ONLY: IMX, IMY
     USE PLASMA, ONLY:  NI
     USE IMPUR_MOD, ONLY: NZ
+
+    USE PLASMA, ONLY: NE, NI, NITOT, ZEFF
+    USE IMPUR_MOD, ONLY: NZ
+    USE IMPDAT,    ONLY: LSTTIM, NOIM
+    USE NET, ONLY: IMX, IMY
+    USE WARIANT, ONLY: INZ
 
     IMPLICIT NONE
 
@@ -117,7 +124,8 @@ PROGRAM MainProgram
 
     close(99)
 
-    CALL SPEED_TEST(NUMBER_OF_TESTS=10, NUMBER_OF_RUNES_PER_TEST=10000, LINEAR=1)
+    CALL SPEED_TEST(NUMBER_OF_TESTS=1, NUMBER_OF_RUNES_PER_TEST=1, LINEAR=1)
+    CALL LOAD_FIRST_RESULT(NITOT, NE, ZEFF)
    
     NOIM = 1
     LSTTIM = [6, 0, 0, 0, 0]
@@ -142,7 +150,8 @@ PROGRAM MainProgram
 
     close(99)
 
-    CALL SPEED_TEST(NUMBER_OF_TESTS=10, NUMBER_OF_RUNES_PER_TEST=10000, LINEAR=0)
+    CALL SPEED_TEST(NUMBER_OF_TESTS=1, NUMBER_OF_RUNES_PER_TEST=1, LINEAR=1)
+    CALL COMPARE(NITOT, NE, ZEFF)
 
 
 END PROGRAM MainProgram

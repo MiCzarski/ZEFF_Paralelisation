@@ -2,7 +2,7 @@ FC := ifort
 FFLAGS := -O2 -openmp
 
 # Source files
-SRC := TEST_FUNCTIONS.f90 main_program.f90 
+SRC := TEST_CONTENT_FUNCTIONS.f90 TEST_TIME_FUNCTIONS.f90 main_program.f90 
 
 # Object files
 OBJ := $(SRC:.f90=.o)
