@@ -185,7 +185,7 @@ SUBROUTINE XYCALCZEFF_PARALLEL_WITH_GRZEGORZ
         end do
         imi= 0;   l= 2;   rl1= 1.0_8
  
-        ! PARALLEL DO PRIVATE(rr, rl1sq) FIRSTPRIVATE(imi, l, rl1) SHARED(nz, rr2imi) reduction(+: nitot, ne, zeff)
+        !$acc parallel loop private(rr, rl1sq) firstprivate(imi, l, rl1) reduction(+: nitot, ne, zeff)
         do rr= 1, lk
             if(imi /= rr2imi(rr)) then
                l= 2;   rl1= 1.0_8;   imi= rr2imi(rr)
@@ -197,7 +197,7 @@ SUBROUTINE XYCALCZEFF_PARALLEL_WITH_GRZEGORZ
             ne(:,:)= ne(:,:) + NZ(:,:,L,IMI) * RL1
             zeff(:,:)= zeff(:,:) + NZ(:,:,L,IMI) * RL1sq
         end do
-        ! END PARALLEL DO
+        !$acc end parallel loop
  
     ENDIF
     NITOT= nitot + NI
