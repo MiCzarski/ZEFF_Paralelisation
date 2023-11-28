@@ -10,8 +10,8 @@ OBJ := $(SRC:.f90=.o)
 # Executable
 EXECUTABLE := program
 
-# Default target
-all: $(EXECUTABLE)
+# Default target with "clean" as a dependency
+all: clean $(EXECUTABLE)
 
 # Compile Fortran source files to object files
 %.o: %.f90
