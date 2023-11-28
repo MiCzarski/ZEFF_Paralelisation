@@ -1,5 +1,5 @@
 FC := ifort
-FFLAGS := -O3 -openmp
+FFLAGS := -O2 -openmp
 
 # Source files
 SRC := TEST_CONTENT_FUNCTIONS.f90 TEST_TIME_FUNCTIONS.f90 main_program.f90 
