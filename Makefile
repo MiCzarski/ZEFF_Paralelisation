@@ -1,8 +1,8 @@
-FC := ifort
-FFLAGS := -O3 -openmp
+FC := nvfortran
+FFLAGS := -O3 -mp=gpu -Minfo=accel
 
 # Source files
-SRC := TEST_CONTENT_FUNCTIONS.f90 TEST_TIME_FUNCTIONS.f90 main_program.f90 
+SRC := TEST_CONTENT_FUNCTIONS.f90 TEST_TIME_FUNCTIONS.f90 main_program.f90
 
 # Object files
 OBJ := $(SRC:.f90=.o)
@@ -19,17 +19,10 @@ all: $(EXECUTABLE)
 
 # Link object files to create the executable
 $(EXECUTABLE): $(OBJ)
-	$(FC) $(FFLAGS) $(OBJ) -o $@
+	$(FC) $(FFLAGS) $(OBJ) -o $@ -lm
 
-# Clean up generated files
+# Clean up generated files, excluding the executable
 clean:
-	del $(OBJ) $(EXECUTABLE)
-	del $(OBJ) $(EXECUTABLE) *.mod
+	@echo "Removing files: $(OBJ) *.mod"
+	rm -f $(OBJ) *.mod
 
-# Fortran code error solution
-# Ensure that the module is compiled before the main program
-# main_program.o: XYCALCZEFF.o
-
-# Implicit rule to compile Fortran source files to object files
-%.o: %.f90
-	$(FC) $(FFLAGS) -c $< -o $@

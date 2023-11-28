@@ -8,8 +8,6 @@ MODULE TEST_CONTENT_FUNCTIONS
 
     PRIVATE :: NITOT_COPY, NE_COPY, ZEFF_COPY, NUMBER_OF_DECIMAL_PLACES
 
-    
-
     CONTAINS
 
     SUBROUTINE LOAD_FIRST_RESULT(NITOT, NE, ZEFF)
@@ -103,14 +101,16 @@ MODULE TEST_CONTENT_FUNCTIONS
     END SUBROUTINE COMPARE_TABLE
 
     FUNCTION ROUND_NUMBER(number, decimals) RESULT(roundedNumber)
-        REAL, INTENT(IN) :: number
+        use ieee_arithmetic, only: ieee_is_nan
+	REAL, INTENT(IN) :: number
         INTEGER, INTENT(IN) :: decimals
         REAL :: roundedNumber
         INTEGER :: exponent
         REAL :: scaledNumber
 
+		
         ! Check if the number is NaN or ±inf
-        IF (isnan(number) .OR. abs(number) == HUGE(0.0)) THEN
+        IF (ieee_is_nan(number) .OR. abs(number) == HUGE(0.0)) THEN
             roundedNumber = 0.0
             RETURN
         END IF
@@ -123,7 +123,6 @@ MODULE TEST_CONTENT_FUNCTIONS
 
         ! Get the exponent of the number
         exponent = FLOOR(LOG10(number)) + 1
-
         ! Scale the number to avoid integer overflow during rounding
         
         scaledNumber = number * 10.0**(decimals - exponent)
